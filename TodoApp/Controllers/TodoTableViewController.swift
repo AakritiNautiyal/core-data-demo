@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoTableViewController: UITableViewController {
 
@@ -14,16 +15,7 @@ class TodoTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        let item1 = Item(context: context)
-        item1.name = "Go for shopping"
-        
-        let item2 = Item(context: context)
-        item2.name = "Have breakfast"
-        
-        let item3 = Item(context: context)
-        item3.name = "Go for walk"
-        
-        items = [item1, item2, item3];
+        loadItems()
     }
     
     @IBAction func addNewItem(_ sender: Any) {
@@ -34,19 +26,25 @@ class TodoTableViewController: UITableViewController {
             itemTextField = alertTextField
         }
         let action = UIAlertAction(title: "Save", style: .default) { action in
-            if let itemName = itemTextField.text{
-                let newItem = Item(context: self.context)
+            
+            let newItem = Item(context: self.context)
+            if let itemName = itemTextField.text, itemName != ""{
                 newItem.name = itemName
-                self.items.append(newItem)
-                self.saveItems()
             }
+            self.items.append(newItem)
+            self.saveItems()
         }
         alertController.addAction(action)
         present(alertController, animated: true, completion: nil)
     }
     
     func loadItems(){
-        //TODO
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do{
+            items = try context.fetch(request)
+        } catch{
+            print("error while loading items \(error)")
+        }
     }
     
     func saveItems(){
