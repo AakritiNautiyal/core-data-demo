@@ -11,12 +11,15 @@ import CoreData
 class TodoTableViewController: UITableViewController {
 
     var items = [Item]()
-    var selectedCategory : Category?
+    var selectedCategory : Category? {
+        didSet{
+            items = Utility.loadItems(selectedCategoryName: selectedCategory!.name!)
+            tableView.reloadData()
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        items = Utility.loadItems(selectedCategoryName: selectedCategory!.name!)
-        tableView.reloadData()
     }
     
     //Create
@@ -38,12 +41,10 @@ class TodoTableViewController: UITableViewController {
             Utility.saveData()
             self.tableView.reloadData()
         }
+        let cancel = UIAlertAction(title: "Cancel", style: .default)
         alertController.addAction(action)
+        alertController.addAction(cancel)
         present(alertController, animated: true, completion: nil)
-    }
-    
-    func loadItems(){
-        
     }
 
     // MARK: - Table view data source

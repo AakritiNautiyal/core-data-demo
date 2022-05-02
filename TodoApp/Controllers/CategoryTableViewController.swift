@@ -35,7 +35,9 @@ class CategoryTableViewController: UITableViewController {
             Utility.saveData()
             self.tableView.reloadData()
         }
+        let cancel = UIAlertAction(title: "Cancel", style: .default)
         alertController.addAction(action)
+        alertController.addAction(cancel)
         present(alertController, animated: true, completion: nil)
     }
     
