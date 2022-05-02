@@ -40,13 +40,13 @@ class TodoTableViewController: UITableViewController {
     }
     
     //Read
-    func loadItems(){
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()){
         do{
             items = try context.fetch(request)
         } catch{
             print("error while loading items \(error)")
         }
+        tableView.reloadData()
     }
     
     func saveItems(){
@@ -91,6 +91,25 @@ class TodoTableViewController: UITableViewController {
             context.delete(itemToBeDeleted)
             items.remove(at: indexPath.row)
             saveItems()
+        }
+    }
+}
+
+extension TodoTableViewController: UISearchBarDelegate{
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let searchText = searchBar.text!
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        request.predicate = NSPredicate(format: "name CONTAINS[cd] %@",searchText)
+        request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
+        loadItems(with: request)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchText.count == 0{
+            loadItems()
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
         }
     }
 }
