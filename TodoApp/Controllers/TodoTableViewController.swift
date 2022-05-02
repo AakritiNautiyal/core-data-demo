@@ -11,11 +11,12 @@ import CoreData
 class TodoTableViewController: UITableViewController {
 
     var items = [Item]()
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var selectedCategory : Category?
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadItems()
+        items = Utility.loadItems(selectedCategoryName: selectedCategory!.name!)
+        tableView.reloadData()
     }
     
     //Create
@@ -28,36 +29,23 @@ class TodoTableViewController: UITableViewController {
         }
         let action = UIAlertAction(title: "Save", style: .default) { action in
             
-            let newItem = Item(context: self.context)
+            let newItem = Item(context: Utility.context)
             if let itemName = itemTextField.text, itemName != ""{
                 newItem.name = itemName
+                newItem.parentCategory = self.selectedCategory
             }
             self.items.append(newItem)
-            self.saveItems()
+            Utility.saveData()
+            self.tableView.reloadData()
         }
         alertController.addAction(action)
         present(alertController, animated: true, completion: nil)
     }
     
-    //Read
-    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()){
-        do{
-            items = try context.fetch(request)
-        } catch{
-            print("error while loading items \(error)")
-        }
-        tableView.reloadData()
+    func loadItems(){
+        
     }
-    
-    func saveItems(){
-        do{
-            try context.save()
-        }catch{
-            print("error saving context \(error)")
-        }
-        tableView.reloadData()
-    }
-    
+
     // MARK: - Table view data source
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -76,7 +64,8 @@ class TodoTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let item = items[indexPath.row]
         item.isChecked = !item.isChecked
-        self.saveItems()
+        Utility.saveData()
+        tableView.reloadData()
     }
 
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
@@ -88,9 +77,10 @@ class TodoTableViewController: UITableViewController {
         if editingStyle == .delete {
             // Delete the row from the data source
             let itemToBeDeleted = items[indexPath.row]
-            context.delete(itemToBeDeleted)
+            Utility.context.delete(itemToBeDeleted)
             items.remove(at: indexPath.row)
-            saveItems()
+            Utility.saveData()
+            tableView.reloadData()
         }
     }
 }
@@ -99,14 +89,16 @@ extension TodoTableViewController: UISearchBarDelegate{
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let searchText = searchBar.text!
         let request: NSFetchRequest<Item> = Item.fetchRequest()
-        request.predicate = NSPredicate(format: "name CONTAINS[cd] %@",searchText)
+        let predicate = NSPredicate(format: "name CONTAINS[cd] %@",searchText)
         request.sortDescriptors = [NSSortDescriptor(key: "name", ascending: true)]
-        loadItems(with: request)
+        items = Utility.loadItems(with: request, selectedCategoryName: selectedCategory!.name!, predicate: predicate)
+        tableView.reloadData()
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         if searchText.count == 0{
-            loadItems()
+            items = Utility.loadItems(selectedCategoryName: selectedCategory!.name!)
+            tableView.reloadData()
             DispatchQueue.main.async {
                 searchBar.resignFirstResponder()
             }
